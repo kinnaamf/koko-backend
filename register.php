@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Подготовленный запрос для добавления нового пользователя
     $stmt = $conn->prepare("INSERT INTO user_accounts (username, email, password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $username, $email, $hashedPassword);
+    $stmt->bind_param("sss", $username, $email, $password);
 
     if ($stmt->execute()) {
         // Успешная регистрация

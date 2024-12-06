@@ -1,0 +1,17 @@
+{
+    "name": "kokosik/koko",
+    "autoload": {
+        "psr-4": {
+            "Kokosik\\Koko\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "kinnaamf",
+            "email": "dimoje.1337@gmail.com"
+        }
+    ],
+    "require": {
+        "firebase/php-jwt": "^6.10"
+    }
+}

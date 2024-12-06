@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    ports:
+      - "81:80"
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - koko_network
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - koko_network
+
+
+  database:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: 'koko'
+      MYSQL_USER: 'koko'
+      MYSQL_PASSWORD: '123'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+      - ./:/var/www/html
+
+    networks:
+      - koko_network
+
+networks:
+  koko_network:
+    driver: bridge
+
+
+
+
+# docker compose up -d
+# docker compose stop
