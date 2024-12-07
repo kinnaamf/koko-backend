@@ -1,8 +1,14 @@
 <?php
+header('Content-Type: application/json');
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST");
+header("Access-Control-Allow-Headers: Content-Type");
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
-$host = "koko-database-1";
+$host = "database";
 $user = "koko";
 $password = "123";
 $dbname = "koko";
@@ -24,3 +30,5 @@ try {
     http_response_code(500);
     echo json_encode(["error" => "Database error: " . $e->getMessage()]);
 }
+
+
