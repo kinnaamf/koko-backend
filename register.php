@@ -1,62 +1,59 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "koko";
+// Настройки подключения к базе данных
+$host = "database";      // Адрес сервера базы данных
+$user = "koko";          // Логин пользователя
+$password = "123";       // Пароль пользователя
+$dbname = "koko";        // Название базы данных
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+try {
+    // Создание PDO подключения
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+    // Устанавливаем режим обработки ошибок
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-} else {
-    echo "Database connection successful";
-}
+    // Получаем данные из запроса
+    $data = json_decode(file_get_contents("php://input"), true);
+    $username = $data['username'];
+    $email = $data['email'];
+    $password = $data['password'];
 
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
-
-    $username = isset($input['username']) ? $input['username'] : '';
-    $email = isset($input['email']) ? $input['email'] : '';
-    $password = isset($input['password']) ? $input['password'] : '';
-
-    if (empty($username) || empty($email) || empty($password)) {
-        echo json_encode(['success' => false, 'message' => 'Username, email, and password are required']);
-        exit;
-    }
-
-    // Проверка на существование пользователя с таким же email
-    $stmt = $conn->prepare("SELECT * FROM user_accounts WHERE email = ?");
-    $stmt->bind_param("s", $email);
+    // Проверка на существование пользователя с таким email
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email");
+    $stmt->bindParam(':email', $email);
     $stmt->execute();
-    $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
-        // Если пользователь с таким email уже существует
-        echo json_encode(['success' => false, 'message' => 'User with this email already exists']);
-        exit;
-    }
-
-    // Хэшируем пароль для безопасности
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-    // Подготовленный запрос для добавления нового пользователя
-    $stmt = $conn->prepare("INSERT INTO user_accounts (username, email, password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $username, $email, $password);
-
-    if ($stmt->execute()) {
-        // Успешная регистрация
-        echo json_encode(['success' => true, 'message' => 'User registered successfully']);
+    if ($stmt->rowCount() > 0) {
+        // Если такой пользователь уже существует
+        echo json_encode([
+            'success' => false,
+            'message' => 'User with this email already exists.'
+        ]);
     } else {
-        // Ошибка при регистрации
-        echo json_encode(['success' => false, 'message' => 'Registration failed']);
+        // Вставка нового пользователя в базу данных
+        $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)");
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':password', $password);
+
+        if ($stmt->execute()) {
+            // Если регистрация успешна
+            echo json_encode([
+                'success' => true,
+                'message' => 'User registered successfully.'
+            ]);
+        } else {
+            // Ошибка при регистрации
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $stmt->errorInfo()[2]
+            ]);
+        }
     }
-
-    // Закрываем соединение
-    $stmt->close();
-} else {
-    // Метод запроса не POST
-    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+} catch (PDOException $e) {
+    // Ошибка подключения к базе данных
+    echo json_encode([
+        'success' => false,
+        'message' => 'Connection failed: ' . $e->getMessage()
+    ]);
 }
-
-$conn->close();
+?>

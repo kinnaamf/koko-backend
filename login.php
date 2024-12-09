@@ -1,75 +1,58 @@
-<?php
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <title>Sign In</title>
+</head>
+<body>
+    <div class="flex justify-center items-center w-full h-screen">
+        <section class="py-3 py-md-5 py-xl-8">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-5">
+                            <h2 class="display-3 fw-semibold text-center">Sign In</h2>
+                            <p class="text-center m-0 fw-medium text-gray-400 mt-5">Don't have an account? <a href="http://localhost:5173/#/register" class="text-blue-700 underline">Sign Up</a></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-12 col-lg-10 col-xl-8">
+                        <div class="row gy-5 justify-content-center">
+                            <div class="col-12 col-lg-5">
+                                <form method="POST" action="do_login.php">
+                                    <div class="row gy-3 overflow-hidden">
+                                        <div class="col-32 w-screen">
+                                            <div class="form-floating mb-3">
+                                                <input type="text" class="form-control border-0 border-bottom rounded-0" name="username" id="username" required>
+                                                <label for="username" class="form-label">Username</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-floating mb-3">
+                                                <input type="password" class="form-control border-0 border-bottom rounded-0" name="password" id="password" required>
+                                                <label for="password" class="form-label">Password</label>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-column gap-4 items-center justify-center col-12">
+                                            <div class="d-grid">
+                                                <button class="btn btn-lg btn-dark rounded-0 fs-6" type="submit">Log In</button>
+                                            </div>
+                                            <div class="self-center" style="text-align: center">
+                                                <a style="font-weight: 600; text-transform: uppercase; margin-top: 12px; text-align: center; color: #333; text-decoration: none" href="http://localhost:5173/#/">Return to homepage without auth</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
 
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Accept: *');
-
-require_once 'vendor/autoload.php';
-
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-const JWT_SECRET_KEY = 'your_secret_key';
-const JWT_ALGORITHM = 'HS256';
-const JWT_EXPIRATION_TIME = 0;
-
-// Подключение к базе данных
-$host = 'localhost';
-$db = 'koko';
-$user = 'root';
-$pass = '';
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(["error" => "Database connection failed."]);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    if (empty($username) || empty($password)) {
-        http_response_code(400);
-        echo json_encode(["error" => "Username and password are required."]);
-        exit;
-    }
-
-    $stmt = $pdo->prepare("SELECT id, username, password, role FROM user_accounts WHERE username = :username");
-    $stmt->execute(['username' => $username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($user && $password === $user['password']) {
-        // Генерация JWT токена
-        $payload = [
-            'iss' => 'http://localhost',
-            'aud' => 'http://localhost',
-            'iat' => time(),
-            'exp' => time() + JWT_EXPIRATION_TIME,
-            'data' => [
-                'id' => $user['id'],
-                'username' => $user['username'],
-                'role' => $user['role']
-            ]
-        ];
-
-        $token = JWT::encode($payload, JWT_SECRET_KEY, JWT_ALGORITHM);
-        $response = [
-                    'status' => 'success',
-                    'token' => $token,
-                    'message' => 'Token created successfully'
-        ];
-        echo json_encode($response);
-        exit;
-    } else {
-        http_response_code(401);
-        echo json_encode(["error" => "Invalid username or password."]);
-        exit;
-    }
-} else {
-    http_response_code(405);
-    echo json_encode(["error" => "Method not allowed."]);
-    exit;
-}
